@@ -1,8 +1,10 @@
+use crate::WEB_TASK_POOL_SIZE;
+use core::str::FromStr;
 use cyw43::NetDriver;
 use defmt::info;
-use embassy_net::{Runner, Stack, StackResources};
+use embassy_net::{DhcpConfig, Runner, Stack, StackResources};
 use embassy_rp::clocks::RoscRng;
-use embassy_time::Timer;
+use heapless::String;
 use static_cell::StaticCell;
 
 #[embassy_executor::task]
@@ -16,33 +18,29 @@ pub struct Network<'d> {
 
 impl<'d> Network<'d> {
     pub fn new(net_device: NetDriver<'d>) -> (Network<'d>, Runner<'d, NetDriver<'d>>) {
-        let config = embassy_net::Config::dhcpv4(Default::default());
+        let mut dhcp = DhcpConfig::default();
+        dhcp.hostname = Some(String::from_str("robodog").unwrap());
+        let config = embassy_net::Config::dhcpv4(dhcp);
 
         let mut rng = RoscRng;
         let seed = rng.next_u64();
 
-        static RESOURCES: StaticCell<StackResources<5>> = StaticCell::new();
+        const SIZE: usize = WEB_TASK_POOL_SIZE + 1;
+        static RESOURCES: StaticCell<StackResources<SIZE>> = StaticCell::new();
         let (stack, runner) = embassy_net::new(
             net_device,
             config,
-            RESOURCES.init(StackResources::new()),
+            RESOURCES.init(StackResources::<SIZE>::new()),
             seed,
         );
         (Self { stack }, runner)
     }
 
     pub async fn up(&mut self) {
-        info!("waiting for DHCP...");
-        while !self.stack.is_config_up() {
-            Timer::after_millis(100).await;
-        }
+        info!("waiting for link to be up...");
+        self.stack.wait_link_up().await;
 
-        info!("waiting for link up...");
-        while !self.stack.is_link_up() {
-            Timer::after_millis(500).await;
-        }
-
-        info!("waiting for stack to be up...");
+        info!("waiting for config to be up...");
         self.stack.wait_config_up().await;
     }
 }

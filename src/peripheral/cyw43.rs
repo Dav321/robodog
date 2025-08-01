@@ -1,10 +1,10 @@
 use core::marker::PhantomData;
 use cyw43::{Control, JoinOptions, NetDriver, Runner};
-use cyw43_pio::{PioSpi, DEFAULT_CLOCK_DIVIDER};
+use cyw43_pio::{DEFAULT_CLOCK_DIVIDER, PioSpi};
 use defmt::info;
+use embassy_rp::Peri;
 use embassy_rp::dma::Channel;
 use embassy_rp::gpio::{Level, Output, Pin};
-use embassy_rp::Peri;
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{Common, Instance, Irq, PioPin, StateMachine};
 use static_cell::StaticCell;

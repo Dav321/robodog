@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 embassy-embedded-hal = { version = "0.3.1", features = ["defmt"] }
-embassy-executor = { version = "0.7.0", features = ["task-arena-size-16384", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"] }
+embassy-executor = { version = "0.7.0", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "nightly"] }
 embassy-time = { version = "0.4.0", features = ["defmt-timestamp-uptime", "defmt"] }
 embassy-rp = { version = "0.6.0", features = ["defmt", "rp2040", "time-driver", "critical-section-impl"] }
 embassy-futures = "0.1.1"
@@ -16,7 +16,7 @@ embassy-net = { version = "0.7.0", features = ["defmt", "icmp", "tcp", "dhcpv4",
 
 cyw43 = { version = "0.4.0", features = ["defmt", "firmware-logs"] }
 cyw43-pio = { version = "0.5.1", features = ["defmt"] }
-reqwless = { version = "0.13.0", features = ["defmt"] }
+picoserve = { version = "0.16.0", features = ["defmt", "embassy"] }
 
 defmt = "1.0.1"
 defmt-rtt = "1.0.0"
@@ -29,3 +29,7 @@ critical-section = "1.2.0"
 portable-atomic = { version = "1.11.1", features = ["critical-section"] }
 fixed = "1.29.0"
 static_cell = "2.1.1"
+heapless = "0.8.0"
+
+embedded-hal = "1.0.0"
+embedded-io-async = "0.6.1"

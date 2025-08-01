@@ -1,6 +1,29 @@
 use core::time::Duration;
+use defmt::info;
+use embassy_rp::peripherals::PIO0;
 use embassy_rp::pio::Instance;
 use embassy_rp::pio_programs::pwm::PioPwm;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::signal::Signal;
+
+pub static UPPER_SERVO_SIGNAL: Signal<CriticalSectionRawMutex, u64> = Signal::new();
+#[embassy_executor::task]
+pub async fn upper_servo_task(mut servo: Servo<'static, PIO0, 1>) -> ! {
+    loop {
+        let angle = UPPER_SERVO_SIGNAL.wait().await;
+        info!("Upper servo: {}", angle);
+        servo.rotate(angle);
+    }
+}
+pub static LOWER_SERVO_SIGNAL: Signal<CriticalSectionRawMutex, u64> = Signal::new();
+#[embassy_executor::task]
+pub async fn lower_servo_task(mut servo: Servo<'static, PIO0, 2>) -> ! {
+    loop {
+        let angle = LOWER_SERVO_SIGNAL.wait().await;
+        info!("Lower servo: {}", angle);
+        servo.rotate(angle);
+    }
+}
 
 pub struct Servo<'d, T: Instance, const SM: usize> {
     pwm: PioPwm<'d, T, SM>,
@@ -29,6 +52,14 @@ impl<'d, T: Instance, const SM: usize> Servo<'d, T, SM> {
         }
     }
 
+    pub fn ky66(pwm: PioPwm<'d, T, SM>) -> Self {
+        let period = Duration::from_millis(20);
+        let min_pw = Duration::from_micros(900);
+        let max_pw = Duration::from_micros(2100);
+
+        Self::new(pwm, period, min_pw, max_pw, 180)
+    }
+
     pub fn start(&mut self) {
         self.pwm.set_period(self.period);
         self.pwm.start();
@@ -48,6 +79,7 @@ impl<'d, T: Instance, const SM: usize> Servo<'d, T, SM> {
         self.pwm.write(duration);
     }
 
+    #[allow(unused)]
     pub fn stop(&mut self) {
         self.pwm.stop();
     }
