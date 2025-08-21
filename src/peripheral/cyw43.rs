@@ -65,6 +65,7 @@ impl<'d, T: Instance, const SM: usize, DMA: Channel> Cyw43<'d, T, SM, DMA> {
             .await;
     }
 
+    #[allow(unused)]
     pub async fn join_wifi(&mut self, ssid: &str, password: &str) {
         loop {
             match self
@@ -78,6 +79,10 @@ impl<'d, T: Instance, const SM: usize, DMA: Channel> Cyw43<'d, T, SM, DMA> {
                 }
             }
         }
+    }
+
+    pub async fn create_ap(&mut self, ssid: &str, password: &str) {
+         self.control.start_ap_wpa2(ssid, password, 5).await;
     }
 
     pub async fn set_led(&mut self, value: bool) {

@@ -5,18 +5,17 @@
 mod net;
 mod peripheral;
 
-use crate::net::app::{AppProps, WEB_TASK_POOL_SIZE, app_task};
-use crate::net::network::{Network, net_task};
-use crate::peripheral::cyw43::{Cyw43, cyw43_task};
-use crate::peripheral::servo::{Servo, lower_servo_task, upper_servo_task};
-use defmt::info;
+use crate::net::app::{app_task, AppProps, WEB_TASK_POOL_SIZE};
+use crate::net::network::{net_task, Network};
+use crate::peripheral::cyw43::{cyw43_task, Cyw43};
+use crate::peripheral::servo::{lower_servo_task, upper_servo_task, Servo};
 use embassy_executor::Spawner;
 use embassy_rp::peripherals::PIO0;
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
 use embassy_rp::{bind_interrupts, init};
 use embassy_time::{Duration, Timer};
-use picoserve::{AppRouter, AppWithStateBuilder, make_static};
+use picoserve::{make_static, AppRouter, AppWithStateBuilder};
 #[allow(unused)]
 use {defmt_rtt as _, panic_probe as _};
 
@@ -53,9 +52,7 @@ async fn main(spawner: Spawner) {
     let (mut net, net_runner) = Network::new(net_device);
     spawner.must_spawn(net_task(net_runner));
 
-    const WIFI_NETWORK: &str = include_str!("../secrets/wifi_ssid.txt");
-    const WIFI_PASSWORD: &str = include_str!("../secrets/wifi_pw.txt");
-    cyw43.join_wifi(WIFI_NETWORK, WIFI_PASSWORD).await;
+    cyw43.create_ap("robodog_ap", "robodogg").await;
     net.up().await;
 
     let pwm_program = PioPwmProgram::new(&mut common);
@@ -86,11 +83,9 @@ async fn main(spawner: Spawner) {
     let delay = Duration::from_secs(1);
     loop {
         cyw43.set_led(false).await;
-        info!("0");
         Timer::after(delay).await;
 
         cyw43.set_led(true).await;
-        info!("1");
         Timer::after(delay).await;
     }
 }

@@ -6,16 +6,16 @@ authors = ["Dav32_1 <64831818+Dav321@users.noreply.github.com>"]
 license = "GPL-3.0-or-later"
 
 [dependencies]
-embassy-embedded-hal = { version = "0.3.1", features = ["defmt"] }
-embassy-executor = { version = "0.7.0", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "nightly"] }
+embassy-embedded-hal = { version = "0.4.0", features = ["defmt"] }
+embassy-executor = { version = "0.8.0", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "nightly"] }
 embassy-time = { version = "0.4.0", features = ["defmt-timestamp-uptime", "defmt"] }
-embassy-rp = { version = "0.6.0", features = ["defmt", "rp2040", "time-driver", "critical-section-impl"] }
+embassy-rp = { version = "0.7.0", features = ["defmt", "rp2040", "time-driver", "critical-section-impl", "intrinsics" ] }
 embassy-futures = "0.1.1"
 embassy-sync = { version = "0.7.0", features = ["defmt"] }
-embassy-net = { version = "0.7.0", features = ["defmt", "icmp", "tcp", "dhcpv4", "dhcpv4-hostname", "proto-ipv4"] }
+embassy-net = { version = "0.7.0", features = ["defmt", "icmp", "multicast", "tcp", "udp", "raw", "dhcpv4-hostname", "proto-ipv4", "medium-ip", "medium-ethernet"] }
 
 cyw43 = { version = "0.4.0", features = ["defmt", "firmware-logs"] }
-cyw43-pio = { version = "0.5.1", features = ["defmt"] }
+cyw43-pio = { version = "0.6.0", features = ["defmt"] }
 picoserve = { version = "0.16.0", features = ["defmt", "embassy"] }
 
 defmt = "1.0.1"
