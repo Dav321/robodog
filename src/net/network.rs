@@ -17,13 +17,11 @@ pub struct Network<'d> {
 
 impl<'d> Network<'d> {
     pub fn new(net_device: NetDriver<'d>) -> (Network<'d>, Runner<'d, NetDriver<'d>>) {
-        let config = embassy_net::Config::ipv4_static(
-            StaticConfigV4 {
-                address: Ipv4Cidr::new(Ipv4Address::new(169, 254, 1, 1), 16),
-                gateway: None,
-                dns_servers: Vec::<Ipv4Address, 3>::new(),
-            }
-        );
+        let config = embassy_net::Config::ipv4_static(StaticConfigV4 {
+            address: Ipv4Cidr::new(Ipv4Address::new(169, 254, 1, 1), 16),
+            gateway: None,
+            dns_servers: Vec::<Ipv4Address, 3>::new(),
+        });
 
         let mut rng = RoscRng;
         let seed = rng.next_u64();

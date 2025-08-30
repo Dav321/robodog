@@ -1,7 +1,7 @@
-use crate::peripheral::servo::{LOWER_SERVO_SIGNAL, UPPER_SERVO_SIGNAL};
+use crate::peripheral::servo::SERVO_SIGNAL;
 use embassy_time::Duration;
 use picoserve::response::{DebugValue, File};
-use picoserve::routing::{get, get_service, parse_path_segment, PathRouter};
+use picoserve::routing::{PathRouter, get, get_service, parse_path_segment};
 use picoserve::{AppBuilder, AppRouter, Router};
 
 pub const WEB_TASK_POOL_SIZE: usize = 8;
@@ -48,17 +48,10 @@ impl AppBuilder for AppProps {
                 get_service(File::javascript(include_str!("www/index.js"))),
             )
             .route(
-                ("/upper_servo", parse_path_segment()),
-                get(|angle: u64| async move {
-                    UPPER_SERVO_SIGNAL.signal(angle);
-                    DebugValue(angle)
-                }),
-            )
-            .route(
-                ("/lower_servo", parse_path_segment()),
-                get(|angle: u64| async move {
-                    LOWER_SERVO_SIGNAL.signal(angle);
-                    DebugValue(angle)
+                ("/pos", parse_path_segment(), parse_path_segment()),
+                get(|pos: (u16, u16)| async move {
+                    SERVO_SIGNAL.signal(pos);
+                    DebugValue(pos)
                 }),
             )
     }

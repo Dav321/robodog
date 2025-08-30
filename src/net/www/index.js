@@ -1,17 +1,17 @@
-const upper_servo = document.getElementById("upper_servo");
-const lower_servo = document.getElementById("lower_servo");
-const upper_servo_label = document.getElementById("upper_servo_label");
-const lower_servo_label = document.getElementById("lower_servo_label");
+const x = document.getElementById("x");
+const y = document.getElementById("y");
+const x_label = document.getElementById("x_label");
+const y_label = document.getElementById("y_label");
 
-upper_servo_label.textContent = "Upper servo: " + upper_servo.value;
-lower_servo_label.textContent = "Lower servo: " + lower_servo.value;
+x_label.textContent = "X: " + x.value;
+y_label.textContent = "Y: " + y.value;
 
-upper_servo.oninput = function() {
-    upper_servo_label.textContent = "Upper servo: " + upper_servo.value;
-    fetch("/upper_servo/" + upper_servo.value)
+x.oninput = function() {
+    x_label.textContent = "X: " + x.value;
+    fetch("/pos/" + x.value + "/" + y.value)
 }
 
-lower_servo.oninput = function() {
-    lower_servo_label.textContent = "Lower servo: " + lower_servo.value;
-    fetch("/lower_servo/" + lower_servo.value)
+y.oninput = function() {
+    y_label.textContent = "Y: " + y.value;
+    fetch("/pos/" + x.value + "/" + y.value)
 }

@@ -1,3 +1,4 @@
+use crate::model::ik::{IkSolver, Joint};
 use core::time::Duration;
 use defmt::info;
 use embassy_rp::peripherals::PIO0;
@@ -6,22 +7,20 @@ use embassy_rp::pio_programs::pwm::PioPwm;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
 
-pub static UPPER_SERVO_SIGNAL: Signal<CriticalSectionRawMutex, u64> = Signal::new();
+pub static SERVO_SIGNAL: Signal<CriticalSectionRawMutex, (u16, u16)> = Signal::new();
 #[embassy_executor::task]
-pub async fn upper_servo_task(mut servo: Servo<'static, PIO0, 1>) -> ! {
+pub async fn servo_task(
+    mut upper_servo: Servo<'static, PIO0, 1>,
+    mut lower_servo: Servo<'static, PIO0, 2>,
+) -> ! {
+    let solver = IkSolver::new(Joint::new(100f32), Joint::new(100f32));
+
     loop {
-        let angle = UPPER_SERVO_SIGNAL.wait().await;
-        info!("Upper servo: {}", angle);
-        servo.rotate(angle);
-    }
-}
-pub static LOWER_SERVO_SIGNAL: Signal<CriticalSectionRawMutex, u64> = Signal::new();
-#[embassy_executor::task]
-pub async fn lower_servo_task(mut servo: Servo<'static, PIO0, 2>) -> ! {
-    loop {
-        let angle = LOWER_SERVO_SIGNAL.wait().await;
-        info!("Lower servo: {}", angle);
-        servo.rotate(angle);
+        let (x, y) = SERVO_SIGNAL.wait().await;
+        let (a1, a2) = solver.solve(x as f32, y as f32);
+        info!("[Servo] pos: ({}|{}) angle: {} - {}", x, y, a1, a2);
+        upper_servo.rotate(a1);
+        lower_servo.rotate(a2);
     }
 }
 
@@ -65,12 +64,12 @@ impl<'d, T: Instance, const SM: usize> Servo<'d, T, SM> {
         self.pwm.start();
     }
 
-    pub fn rotate(&mut self, degree: u64) {
+    pub fn rotate(&mut self, degree: u8) {
         let pw_ns_diff = self.max_pw.as_nanos() as u64 - self.min_pw.as_nanos() as u64;
         let deg_per_ns = pw_ns_diff / self.max_rotation;
 
         let mut duration =
-            Duration::from_nanos(degree * deg_per_ns + self.min_pw.as_nanos() as u64);
+            Duration::from_nanos(degree as u64 * deg_per_ns + self.min_pw.as_nanos() as u64);
 
         if self.max_pw < duration {
             duration = self.max_pw;

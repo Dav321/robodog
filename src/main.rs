@@ -2,20 +2,21 @@
 #![no_main]
 #![feature(impl_trait_in_assoc_type)]
 
+mod model;
 mod net;
 mod peripheral;
 
-use crate::net::app::{app_task, AppProps, WEB_TASK_POOL_SIZE};
-use crate::net::network::{net_task, Network};
-use crate::peripheral::cyw43::{cyw43_task, Cyw43};
-use crate::peripheral::servo::{lower_servo_task, upper_servo_task, Servo};
+use crate::net::app::{AppProps, WEB_TASK_POOL_SIZE, app_task};
+use crate::net::network::{Network, net_task};
+use crate::peripheral::cyw43::{Cyw43, cyw43_task};
+use crate::peripheral::servo::{Servo, servo_task};
 use embassy_executor::Spawner;
 use embassy_rp::peripherals::PIO0;
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
 use embassy_rp::{bind_interrupts, init};
 use embassy_time::{Duration, Timer};
-use picoserve::{make_static, AppRouter, AppWithStateBuilder};
+use picoserve::{AppRouter, AppWithStateBuilder, make_static};
 #[allow(unused)]
 use {defmt_rtt as _, panic_probe as _};
 
@@ -60,13 +61,12 @@ async fn main(spawner: Spawner) {
     let mut lower_servo = Servo::ky66(PioPwm::new(&mut common, sm2, p.PIN_3, &pwm_program));
 
     upper_servo.start();
-    spawner.must_spawn(upper_servo_task(upper_servo));
     lower_servo.start();
-    spawner.must_spawn(lower_servo_task(lower_servo));
+    spawner.must_spawn(servo_task(upper_servo, lower_servo));
 
     let app = make_static!(AppRouter<AppProps>, AppProps.build_app());
     let config = make_static!(
-        picoserve::Config::<Duration>,
+        picoserve::Config<Duration>,
         picoserve::Config::new(picoserve::Timeouts {
             start_read_request: Some(Duration::from_secs(5)),
             persistent_start_read_request: Some(Duration::from_secs(1)),
