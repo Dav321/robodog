@@ -9,12 +9,17 @@
     </head>
 
     <body>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="calibrate.html">Calibration</a></li>
+        </ul>
+
         <h1>Robodog</h1>
-        <br/>
+
+        <input type="range" min="-100" max="100" value="0" class="slider" id="x"/>
         <label for="x" id="x_label"></label>
-        <input type="range" min="-200" max="200" value="50" class="slider" id="x"/>
         <br/>
+        <input type="range" min="10" max="200" value="100" class="slider" id="y"/>
         <label for="y" id="y_label">Lower servo</label>
-        <input type="range" min="-200" max="200" value="50" class="slider" id="y"/>
     </body>
 </html>

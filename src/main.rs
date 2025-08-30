@@ -57,8 +57,18 @@ async fn main(spawner: Spawner) {
     net.up().await;
 
     let pwm_program = PioPwmProgram::new(&mut common);
-    let mut upper_servo = Servo::ky66(PioPwm::new(&mut common, sm1, p.PIN_2, &pwm_program));
-    let mut lower_servo = Servo::ky66(PioPwm::new(&mut common, sm2, p.PIN_3, &pwm_program));
+    let mut upper_servo = Servo::ky66(
+        PioPwm::new(&mut common, sm1, p.PIN_2, &pwm_program),
+        1540,
+        2708,
+        90
+    );
+    let mut lower_servo = Servo::ky66(
+        PioPwm::new(&mut common, sm2, p.PIN_3, &pwm_program),
+        400,
+        2389,
+        180
+    );
 
     upper_servo.start();
     lower_servo.start();
