@@ -22,7 +22,7 @@ pub async fn servo_task(
             Either::First((x, y)) => {
                 let (a1, a2) = solver.solve(x as f32, y as f32);
                 info!("[Servo] pos: ({}|{}) angle: {} - {}", x, y, a1, a2);
-                upper_servo.rotate(a1);
+                upper_servo.rotate(90 - a1);
                 lower_servo.rotate(a2);
             }
             Either::Second(pwm) => {
