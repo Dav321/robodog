@@ -1,8 +1,8 @@
-use crate::peripheral::servo::{SERVO_CALIBRATION_SIGNAL, SERVO_SIGNAL};
 use embassy_time::Duration;
 use picoserve::response::{DebugValue, File, Redirect};
 use picoserve::routing::{PathRouter, get, get_service, parse_path_segment};
 use picoserve::{AppBuilder, AppRouter, Router};
+use crate::peripheral::servo::{SERVO_CALIBRATION_SIGNAL, SERVO_SIGNAL};
 
 pub const WEB_TASK_POOL_SIZE: usize = 8;
 
@@ -67,8 +67,8 @@ impl AppBuilder for AppProps {
                 get_service(File::javascript(include_str!("www/calibrate.js"))),
             )
             .route(
-                ("/pos", parse_path_segment(), parse_path_segment()),
-                get(|pos: (u16, u16)| async move {
+                ("/pos", parse_path_segment(), parse_path_segment(), parse_path_segment()),
+                get(|pos: (u16, u16, u16)| async move {
                     SERVO_SIGNAL.signal(pos);
                     DebugValue(pos)
                 }),
@@ -76,7 +76,7 @@ impl AppBuilder for AppProps {
             .route(
                 ("/pwm", parse_path_segment()),
                 get(|pwm: u16| async move {
-                    SERVO_CALIBRATION_SIGNAL.signal(pwm);
+                    SERVO_CALIBRATION_SIGNAL.signal(pwm as f32 / 6666.66);
                     DebugValue(pwm)
                 }),
             )

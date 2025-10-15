@@ -4,6 +4,6 @@ const pwm_label = document.getElementById("pwm_label");
 pwm_label.textContent = "PWM: " + pwm.value;
 
 pwm.oninput = function() {
-    pwm_label.textContent = "PWM: " + pwm.value;
+    pwm_label.textContent = "PWM: " + (pwm.value / 6666.66);
     fetch("/pwm/" + pwm.value)
 }

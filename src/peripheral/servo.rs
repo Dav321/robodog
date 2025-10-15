@@ -1,99 +1,69 @@
-use crate::model::ik::{IkSolver, Joint};
-use core::time::Duration;
-use defmt::info;
-use embassy_futures::select::{Either, select};
-use embassy_rp::peripherals::PIO0;
-use embassy_rp::pio::Instance;
-use embassy_rp::pio_programs::pwm::PioPwm;
+use defmt::{debug, error};
+use embassy_rp::pwm::PwmOutput;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
+use embedded_hal::pwm::SetDutyCycle;
 
-pub static SERVO_SIGNAL: Signal<CriticalSectionRawMutex, (u16, u16)> = Signal::new();
-pub static SERVO_CALIBRATION_SIGNAL: Signal<CriticalSectionRawMutex, u16> = Signal::new();
+
+pub static SERVO_SIGNAL: Signal<CriticalSectionRawMutex, (u16, u16, u16)> = Signal::new();
+pub static SERVO_CALIBRATION_SIGNAL: Signal<CriticalSectionRawMutex, f32> = Signal::new();
 #[embassy_executor::task]
-pub async fn servo_task(
-    mut upper_servo: Servo<'static, PIO0, 1>,
-    mut lower_servo: Servo<'static, PIO0, 2>,
-) -> ! {
-    let solver = IkSolver::new(Joint::new(100f32), Joint::new(100f32));
-
+pub async fn servo_task(mut servo_0: Servo<'static>, mut servo_1: Servo<'static>, mut servo_2: Servo<'static>) -> ! {
     loop {
-        match select(SERVO_SIGNAL.wait(), SERVO_CALIBRATION_SIGNAL.wait()).await {
-            Either::First((x, y)) => {
-                let (a1, a2) = solver.solve(x as f32, y as f32);
-                info!("[Servo] pos: ({}|{}) angle: {} - {}", x, y, a1, a2);
-                upper_servo.rotate(90 - a1);
-                lower_servo.rotate(a2);
-            }
-            Either::Second(pwm) => {
-                info!("[Servo] cal: {}", pwm);
-                upper_servo.write(Duration::from_micros(pwm as u64));
-                lower_servo.write(Duration::from_micros(pwm as u64));
-            }
-        }
+        let pos = SERVO_CALIBRATION_SIGNAL.wait().await;
+        debug!("Servo calibration signal: pos={}", pos);
+        servo_0.write(pos);
+        servo_1.write(pos);
+        servo_2.write(pos);
     }
 }
 
-pub struct Servo<'d, T: Instance, const SM: usize> {
-    pwm: PioPwm<'d, T, SM>,
+#[derive(Copy, Clone)]
+pub struct ServoConfig {
+    min: f32,
+    max: f32,
 
-    period: Duration,
-    min_pw: Duration,
-    max_pw: Duration,
-
-    max_rotation: u64,
+    max_rotation: u16,
 }
 
-impl<'d, T: Instance, const SM: usize> Servo<'d, T, SM> {
+impl ServoConfig {
+    pub fn new(min: f32, max: f32, max_rotation: u16) -> Self {
+        ServoConfig { min, max, max_rotation }
+    }
+}
+
+pub struct Servo<'d> {
+    pwm: PwmOutput<'d>,
+    config: ServoConfig,
+}
+
+impl<'d> Servo<'d> {
     pub fn new(
-        pwm: PioPwm<'d, T, SM>,
-        period: Duration,
-        min_pw: Duration,
-        max_pw: Duration,
-        max_rotation: u64,
+        pwm: PwmOutput<'d>,
+        config: ServoConfig
     ) -> Self {
         Self {
             pwm,
-            period,
-            min_pw,
-            max_pw,
-            max_rotation,
+            config,
         }
     }
 
-    pub fn ky66(pwm: PioPwm<'d, T, SM>, min_pw: u64, max_pw: u64, max_rotation: u64) -> Self {
-        let period = Duration::from_millis(20);
-        let min_pw = Duration::from_micros(min_pw);
-        let max_pw = Duration::from_micros(max_pw);
-
-        Self::new(pwm, period, min_pw, max_pw, max_rotation)
+    pub fn rotate(&mut self, degree: f32) {
+        let max_deg = self.config.max_rotation as f32;
+        let delta = self.config.max - self.config.min;
+        let degree_percent = degree / max_deg;
+        let percentage = self.config.min + (degree_percent * delta);
+        self.write(percentage);
     }
 
-    pub fn start(&mut self) {
-        self.pwm.set_period(self.period);
-        self.pwm.start();
-    }
-
-    pub fn rotate(&mut self, degree: u8) {
-        let pw_ns_diff = self.max_pw.as_nanos() as u64 - self.min_pw.as_nanos() as u64;
-        let deg_per_ns = pw_ns_diff / self.max_rotation;
-
-        let mut duration =
-            Duration::from_nanos(degree as u64 * deg_per_ns + self.min_pw.as_nanos() as u64);
-
-        if self.max_pw < duration {
-            duration = self.max_pw;
+    pub fn write(&mut self, percentage: f32) {
+        if percentage > 1.0 || percentage < 0.0 {
+            error!("Percentage must be between 0 and 1, is: {}", percentage);
+            return;
         }
-
-        self.pwm.write(duration);
-    }
-
-    pub fn write(&mut self, duration: Duration) {
-        self.pwm.write(duration);
-    }
-
-    #[allow(unused)]
-    pub fn stop(&mut self) {
-        self.pwm.stop();
+        let max = self.pwm.max_duty_cycle();
+        let val = (percentage * max as f32) as u16;
+        self.pwm.set_duty_cycle(val).unwrap();
+        debug!("Set duty cycle to={}", val);
     }
 }
