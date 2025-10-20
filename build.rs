@@ -74,22 +74,25 @@ fn download_files() -> Result<bool, anyhow::Error> {
     core.read_64(STATIC_START, &mut header)?;
     drop(core);
 
-    let missing = files
-        .iter()
-        .map(|f| {
-            let path = Path::new(&out_dir).join(f);
-            fs::exists(path).unwrap()
-        })
-        .any(|b| !b);
+    let missing: Vec<&&str> = files.iter()
+        .filter(|f| !Path::new(&out_dir).join(f).exists())
+        .collect();
 
-    if header == expected && !missing {
+    if header == expected && missing.is_empty() {
         return Ok(false);
     }
-    p!(
-        "header mismatch, expected {:?}, got {:?}. Reflashing...",
-        expected,
-        header
-    );
+
+    if header != expected {
+        p!(
+            "header mismatch, expected {:?}, got {:?}. Reflashing...",
+            expected,
+            header
+        );
+    } else {
+        p!("Missing file(s): {:?}", missing);
+    }
+
+
     let mut i = STATIC_START;
     let mut loader = FlashLoader::new(
         session.target().memory_map.to_vec(),
