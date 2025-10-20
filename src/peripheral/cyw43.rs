@@ -1,3 +1,4 @@
+use crate::include_flash_bytes;
 use core::marker::PhantomData;
 use cyw43::{Control, JoinOptions, NetDriver, Runner};
 use cyw43_pio::{DEFAULT_CLOCK_DIVIDER, PioSpi};
@@ -36,7 +37,7 @@ impl<'d, T: Instance, const SM: usize, DMA: Channel> Cyw43<'d, T, SM, DMA> {
         NetDriver<'d>,
         Runner<'d, Output<'d>, PioSpi<'d, T, SM, DMA>>,
     ) {
-        let fw = include_bytes!("../../firmware/43439A0.bin");
+        let fw = include_flash_bytes!("firmware/43439A0.bin");
 
         let pwr = Output::new(pwr, Level::Low);
         let cs = Output::new(cs, Level::High);
@@ -57,7 +58,7 @@ impl<'d, T: Instance, const SM: usize, DMA: Channel> Cyw43<'d, T, SM, DMA> {
     }
 
     pub async fn init(&mut self) {
-        let clm = include_bytes!("../../firmware/43439A0_clm.bin");
+        let clm = include_flash_bytes!("firmware/43439A0_clm.bin");
         self.control.init(clm).await;
 
         self.control

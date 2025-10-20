@@ -36,3 +36,11 @@ libm = "0.2.15"
 embedded-hal = "1.0.0"
 embedded-io-async = "0.7.0"
 log = "0.4.28"
+
+[build-dependencies]
+anyhow = "1.0.100"
+probe-rs = "0.29.1"
+sha2 = "0.10.9"
+
+[profile.dev.package."*"]
+opt-level = 3

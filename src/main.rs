@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(impl_trait_in_assoc_type)]
 
+mod macros;
 mod model;
 mod net;
 mod peripheral;

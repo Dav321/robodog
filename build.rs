@@ -8,10 +8,21 @@
 //! updating `memory.x` ensures a rebuild of the application with the
 //! new memory settings.
 
-use std::env;
-use std::fs::File;
+use probe_rs::flashing::Format::Bin;
+use probe_rs::flashing::{BinOptions, DownloadOptions, FlashLoader};
+use probe_rs::probe::list::Lister;
+use probe_rs::{MemoryInterface, Permissions};
+use std::fs::{File, read_to_string};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::{env, fs};
+
+macro_rules! p {
+    ($($tokens: tt)*) => {
+        println!("cargo:warning={}", format!($($tokens)*))
+    }
+}
 
 fn main() {
     // Put `memory.x` in our output directory and ensure it's
@@ -32,4 +43,87 @@ fn main() {
     println!("cargo:rustc-link-arg-bins=--nmagic");
     println!("cargo:rustc-link-arg-bins=-Tlink.x");
     println!("cargo:rustc-link-arg-bins=-Tdefmt.x");
+
+    println!("cargo:rerun-if-changed=flash_files");
+    download_files().unwrap();
+}
+
+const STATIC_START: u64 = 0x10300000;
+fn download_files() -> Result<bool, anyhow::Error> {
+    let out_dir = env::var("OUT_DIR")?;
+
+    let binding = read_to_string("flash_files")?;
+    let files = binding.lines().collect::<Vec<_>>();
+
+    let lister = Lister::new();
+    let probes = lister.list_all();
+    let probe = probes[0].open()?;
+    let mut session = probe.attach("RP235x", Permissions::default())?;
+
+    let mut core = session.core(0)?;
+
+    let mut hasher = DefaultHasher::new();
+    files.hash(&mut hasher);
+    for file in files.iter() {
+        fs::metadata(file)?.modified()?.hash(&mut hasher);
+    }
+    let hash = hasher.finish();
+
+    let expected = [STATIC_START, hash];
+    let mut header = [0u64; 2];
+    core.read_64(STATIC_START, &mut header)?;
+    drop(core);
+
+    let missing = files
+        .iter()
+        .map(|f| {
+            let path = Path::new(&out_dir).join(f);
+            fs::exists(path).unwrap()
+        })
+        .any(|b| !b);
+
+    if header == expected && !missing {
+        return Ok(false);
+    }
+    p!(
+        "header mismatch, expected {:?}, got {:?}. Reflashing...",
+        expected,
+        header
+    );
+    let mut i = STATIC_START;
+    let mut loader = FlashLoader::new(
+        session.target().memory_map.to_vec(),
+        session.target().source().clone(),
+    );
+    loader.add_data(i, &expected[0].to_le_bytes())?;
+    i += 8;
+    loader.add_data(i, &expected[1].to_le_bytes())?;
+    i += 8;
+
+    for file in files.iter() {
+        println!("cargo:rerun-if-changed={}", file);
+
+        let size = fs::metadata(file)?.len();
+        let options = BinOptions {
+            base_address: Some(i),
+            skip: 0,
+        };
+        loader.load_image(&mut session, &mut File::open(file)?, Bin(options), None)?;
+
+        let path = Path::new(&out_dir).join(file);
+        let content = format!("core::slice::from_raw_parts({} as *const u8, {})", i, size);
+        fs::create_dir_all(path.parent().unwrap())?;
+        fs::write(path, content)?;
+
+        i += size;
+    }
+
+    let mut options = DownloadOptions::default();
+    options.do_chip_erase = true;
+    options.keep_unwritten_bytes = true;
+    options.verify = true;
+
+    loader.commit(&mut session, options)?;
+
+    Ok(true)
 }

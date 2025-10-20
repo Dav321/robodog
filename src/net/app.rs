@@ -1,4 +1,5 @@
 use crate::peripheral::servo::{SERVO_SIGNAL, ServoTask};
+use crate::{include_flash_bytes, include_flash_str};
 use embassy_time::Duration;
 use picoserve::response::{DebugValue, File, Redirect};
 use picoserve::routing::{PathRouter, get, get_service, parse_path_segment};
@@ -41,30 +42,30 @@ impl AppBuilder for AppProps {
             .route("/", get(|| Redirect::to("/index.html")))
             .route(
                 "/index.html",
-                get_service(File::html(include_str!("www/index.html"))),
+                get_service(File::html(include_flash_str!("www/index.html"))),
             )
             .route(
                 "/calibrate.html",
-                get_service(File::html(include_str!("www/calibrate.html"))),
+                get_service(File::html(include_flash_str!("www/calibrate.html"))),
             )
             .route(
                 "/index.css",
-                get_service(File::css(include_str!("www/index.css"))),
+                get_service(File::css(include_flash_str!("www/index.css"))),
             )
             .route(
                 "/JetBrainsMono-Regular.woff2",
                 get_service(File::with_content_type(
                     "font/woff2",
-                    include_bytes!("www/JetBrainsMono-Regular.woff2"),
+                    include_flash_bytes!("www/JetBrainsMono-Regular.woff2"),
                 )),
             )
             .route(
                 "/index.js",
-                get_service(File::javascript(include_str!("www/index.js"))),
+                get_service(File::javascript(include_flash_str!("www/index.js"))),
             )
             .route(
                 "/calibrate.js",
-                get_service(File::javascript(include_str!("www/calibrate.js"))),
+                get_service(File::javascript(include_flash_str!("www/calibrate.js"))),
             )
             .route(
                 (
