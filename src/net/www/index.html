@@ -10,16 +10,21 @@
 
     <body>
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="calibrate.html">Calibration</a></li>
+            <li><a href="index.html" class="navbar-element">Robodog</a></li>
+            <li><a href="calibrate.html" class="navbar-element">Calibration</a></li>
+            <li><button onclick="fetch('/home')" class="navbar-element">Home</button></li>
         </ul>
 
         <h1>Robodog</h1>
 
-        <input type="range" min="-100" max="100" value="0" class="slider" id="x"/>
-        <label for="x" id="x_label"></label>
+        <input type="range" min="-20000" max="20000" value="0" class="slider" id="x"/>
+        <label for="x" id="x_label">X</label>
         <br/>
-        <input type="range" min="10" max="200" value="100" class="slider" id="y"/>
-        <label for="y" id="y_label">Lower servo</label>
+        <input type="range" min="0" max="20000" value="16000" class="slider" id="y"/>
+        <label for="y" id="y_label">Y</label>
+        <br/>
+        <input type="range" min="-10000" max="10000" value="0" class="slider" id="z"/>
+        <label for="z" id="z_label">Z</label>
+
     </body>
 </html>

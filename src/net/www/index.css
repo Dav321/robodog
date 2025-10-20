@@ -15,13 +15,17 @@ ul {
     display: flex;
 }
 
-ul li a {
+.navbar-element {
     display: block;
     color: white;
     padding: 14px 16px;
     text-decoration: none;
+    font-size: 16px;
+    border: none;
+    background-color: #333333;
 }
 
-ul li a:hover {
+.navbar-element:hover {
     background-color: #111111;
+    cursor: pointer;
 }

@@ -6,17 +6,17 @@ mod model;
 mod net;
 mod peripheral;
 
-use crate::net::app::{app_task, AppProps, WEB_TASK_POOL_SIZE};
-use crate::net::network::{net_task, Network};
-use crate::peripheral::cyw43::{cyw43_task, Cyw43};
-use crate::peripheral::servo::{servo_task, Servo, ServoConfig};
+use crate::net::app::{AppProps, WEB_TASK_POOL_SIZE, app_task};
+use crate::net::network::{Network, net_task};
+use crate::peripheral::cyw43::{Cyw43, cyw43_task};
+use crate::peripheral::servo::{Servo, ServoConfig, servo_task};
 use embassy_executor::Spawner;
 use embassy_rp::peripherals::PIO0;
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::pwm::{Config, Pwm};
 use embassy_rp::{bind_interrupts, init};
 use embassy_time::{Duration, Timer};
-use picoserve::{make_static, AppRouter, AppWithStateBuilder};
+use picoserve::{AppRouter, AppWithStateBuilder, make_static};
 #[allow(unused)]
 use {defmt_rtt as _, panic_probe as _};
 
@@ -61,13 +61,24 @@ async fn main(spawner: Spawner) {
     pwm_config.divider = (div as u8).into();
     pwm_config.top = top as u16;
 
-    let (pwm_0, pwm_1) = Pwm::new_output_ab(p.PWM_SLICE0, p.PIN_0, p.PIN_1, pwm_config.clone()).split();
+    let (pwm_0, pwm_1) =
+        Pwm::new_output_ab(p.PWM_SLICE0, p.PIN_0, p.PIN_1, pwm_config.clone()).split();
     let (pwm_2, _) = Pwm::new_output_ab(p.PWM_SLICE1, p.PIN_2, p.PIN_3, pwm_config.clone()).split();
 
-    let servo_config = ServoConfig::new(1.0/20.0, 2.0/20.0, 180);
-    let servo_0 = Servo::new(pwm_0.unwrap(), servo_config.clone());
-    let servo_1 = Servo::new(pwm_1.unwrap(), servo_config.clone());
-    let servo_2 = Servo::new(pwm_2.unwrap(), servo_config.clone());
+    #[allow(unused_variables)]
+    let mg90s_config = ServoConfig::new(1.0 / 20.0, 1.5 / 20.0, 2.0 / 20.0, 180, 0, false, false);
+    let servo_0 = Servo::new(
+        pwm_0.unwrap(),
+        ServoConfig::new(0.035, 0.06, 0.086, 90, 45, false, true),
+    );
+    let servo_1 = Servo::new(
+        pwm_1.unwrap(),
+        ServoConfig::new(0.03, 0.105, 0.12, 180 - 15, 90, false, true),
+    );
+    let servo_2 = Servo::new(
+        pwm_2.unwrap(),
+        ServoConfig::new(0.0315, 0.08, 0.12, 180 - 15, 0, true, true),
+    );
 
     spawner.must_spawn(servo_task(servo_0, servo_1, servo_2));
 
