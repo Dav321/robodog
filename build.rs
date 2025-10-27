@@ -74,7 +74,8 @@ fn download_files() -> Result<bool, anyhow::Error> {
     core.read_64(STATIC_START, &mut header)?;
     drop(core);
 
-    let missing: Vec<&&str> = files.iter()
+    let missing: Vec<&&str> = files
+        .iter()
         .filter(|f| !Path::new(&out_dir).join(f).exists())
         .collect();
 
@@ -91,7 +92,6 @@ fn download_files() -> Result<bool, anyhow::Error> {
     } else {
         p!("Missing file(s): {:?}", missing);
     }
-
 
     let mut i = STATIC_START;
     let mut loader = FlashLoader::new(

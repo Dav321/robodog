@@ -33,11 +33,7 @@ impl Format for ServoTask {
 
 pub static SERVO_SIGNAL: Signal<CriticalSectionRawMutex, ServoTask> = Signal::new();
 #[embassy_executor::task]
-pub async fn servo_task(
-    mut servo_0: Servo<'static>,
-    mut servo_1: Servo<'static>,
-    mut servo_2: Servo<'static>,
-) -> ! {
+pub async fn servo_task(mut servos: [Servo<'static>; 12]) -> ! {
     let delay = Duration::from_millis(5);
     let solver = IkSolver::new(Joint::new(0.0), Joint::new(100.0), Joint::new(100.0));
 
@@ -47,32 +43,42 @@ pub async fn servo_task(
                 info!("Task: {}", task);
                 match task {
                     ServoTask::CALIBRATION(pos) => {
-                        servo_0.write(pos);
-                        servo_1.write(pos);
-                        servo_2.write(pos);
+                        for s in &mut servos {
+                            s.write(pos)
+                        }
                     }
                     ServoTask::MOVE(x, y, z) => {
                         if let Some((a1, a2, a3)) = solver.solve(x, y, z) {
                             debug!("Servo signal: angles={}", (a1, a2, a3));
-                            servo_0.rotate(a1);
-                            servo_1.rotate(a2);
-                            servo_2.rotate(a3);
+                            let mut i = 0u8;
+                            for s in &mut servos {
+                                i += 1;
+                                match i {
+                                    1 => s.rotate(a1),
+                                    2 => s.rotate(a2),
+                                    3 => {
+                                        s.rotate(a3);
+                                        i = 0;
+                                    }
+                                    _ => unreachable!(),
+                                }
+                            }
                         } else {
                             error!("Not Reachable!");
                             SERVO_SIGNAL.signal(ServoTask::HOME);
                         };
                     }
                     ServoTask::HOME => {
-                        servo_0.home();
-                        servo_1.home();
-                        servo_2.home();
+                        for s in &mut servos {
+                            s.home()
+                        }
                     }
                 }
             }
             Either::Second(()) => {
-                servo_0.tick();
-                servo_1.tick();
-                servo_2.tick();
+                for s in &mut servos {
+                    s.tick()
+                }
             }
         }
     }

@@ -65,6 +65,17 @@ async fn main(spawner: Spawner) {
     let (pwm_0, pwm_1) =
         Pwm::new_output_ab(p.PWM_SLICE0, p.PIN_0, p.PIN_1, pwm_config.clone()).split();
     let (pwm_2, _) = Pwm::new_output_ab(p.PWM_SLICE1, p.PIN_2, p.PIN_3, pwm_config.clone()).split();
+    let (pwm_4, pwm_5) =
+        Pwm::new_output_ab(p.PWM_SLICE2, p.PIN_4, p.PIN_5, pwm_config.clone()).split();
+    let (pwm_6, _) = Pwm::new_output_ab(p.PWM_SLICE3, p.PIN_6, p.PIN_7, pwm_config.clone()).split();
+    let (pwm_8, pwm_9) =
+        Pwm::new_output_ab(p.PWM_SLICE4, p.PIN_8, p.PIN_9, pwm_config.clone()).split();
+    let (pwm_10, _) =
+        Pwm::new_output_ab(p.PWM_SLICE5, p.PIN_10, p.PIN_11, pwm_config.clone()).split();
+    let (pwm_12, pwm_13) =
+        Pwm::new_output_ab(p.PWM_SLICE6, p.PIN_12, p.PIN_13, pwm_config.clone()).split();
+    let (pwm_14, _) =
+        Pwm::new_output_ab(p.PWM_SLICE7, p.PIN_14, p.PIN_15, pwm_config.clone()).split();
 
     #[allow(unused_variables)]
     let mg90s_config = ServoConfig::new(1.0 / 20.0, 1.5 / 20.0, 2.0 / 20.0, 180, 0, false, false);
@@ -80,8 +91,20 @@ async fn main(spawner: Spawner) {
         pwm_2.unwrap(),
         ServoConfig::new(0.0315, 0.08, 0.12, 180 - 15, 0, true, true),
     );
+    let servo_4 = Servo::new(pwm_4.unwrap(), mg90s_config);
+    let servo_5 = Servo::new(pwm_5.unwrap(), mg90s_config);
+    let servo_6 = Servo::new(pwm_6.unwrap(), mg90s_config);
+    let servo_8 = Servo::new(pwm_8.unwrap(), mg90s_config);
+    let servo_9 = Servo::new(pwm_9.unwrap(), mg90s_config);
+    let servo_10 = Servo::new(pwm_10.unwrap(), mg90s_config);
+    let servo_12 = Servo::new(pwm_12.unwrap(), mg90s_config);
+    let servo_13 = Servo::new(pwm_13.unwrap(), mg90s_config);
+    let servo_14 = Servo::new(pwm_14.unwrap(), mg90s_config);
 
-    spawner.must_spawn(servo_task(servo_0, servo_1, servo_2));
+    spawner.must_spawn(servo_task([
+        servo_0, servo_1, servo_2, servo_4, servo_5, servo_6, servo_8, servo_9, servo_10, servo_12,
+        servo_13, servo_14,
+    ]));
 
     let app = make_static!(AppRouter<AppProps>, AppProps.build_app());
     let config = make_static!(
