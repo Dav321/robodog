@@ -1,0 +1,20 @@
+meta {
+  name: calibrate
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://169.254.1.1/pwm/:pwm
+  body: none
+  auth: inherit
+}
+
+params:path {
+  pwm: 500
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

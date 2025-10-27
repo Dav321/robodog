@@ -1,0 +1,22 @@
+meta {
+  name: set pos
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://169.254.1.1/pos/:x/:y/:z
+  body: none
+  auth: inherit
+}
+
+params:path {
+  z: 10000
+  y: 10000
+  x: 0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
