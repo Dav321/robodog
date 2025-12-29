@@ -29,3 +29,17 @@ ul {
     background-color: #111111;
     cursor: pointer;
 }
+
+input[type=radio] {
+    display: none;
+}
+
+input[type="radio"] + label {
+    padding: 14px 16px;
+    cursor: pointer;
+}
+
+input[type="radio"]:checked + label {
+    background-color: #333333;
+    color: #ffffff;
+}

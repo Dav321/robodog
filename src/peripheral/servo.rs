@@ -10,7 +10,7 @@ use embedded_hal::pwm::SetDutyCycle;
 use libm::cosf;
 
 pub enum ServoTask {
-    CALIBRATION(f32),
+    CALIBRATION(u8, f32),
     MOVE(f32, f32, f32),
     HOME,
 }
@@ -18,8 +18,8 @@ pub enum ServoTask {
 impl Format for ServoTask {
     fn format(&self, fmt: Formatter) {
         match self {
-            ServoTask::CALIBRATION(pos) => {
-                write!(fmt, "CALIBRATION({})", pos)
+            ServoTask::CALIBRATION(servo, pos) => {
+                write!(fmt, "CALIBRATION({} -> {})", servo, pos)
             }
             ServoTask::MOVE(x, y, z) => {
                 write!(fmt, "MOVE({})", (x, y, z))
@@ -42,10 +42,12 @@ pub async fn servo_task(mut servos: [Servo<'static>; 12]) -> ! {
             Either::First(task) => {
                 info!("Task: {}", task);
                 match task {
-                    ServoTask::CALIBRATION(pos) => {
-                        for s in &mut servos {
-                            s.write(pos)
+                    ServoTask::CALIBRATION(servo, pos) => {
+                        if servo > 12 {
+                            error!("Servo out of range: {}", servo);
+                            continue;
                         }
+                        servos[servo as usize].write(pos);
                     }
                     ServoTask::MOVE(x, y, z) => {
                         if let Some((a1, a2, a3)) = solver.solve(x, y, z) {

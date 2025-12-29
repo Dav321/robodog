@@ -79,18 +79,9 @@ async fn main(spawner: Spawner) {
 
     #[allow(unused_variables)]
     let mg90s_config = ServoConfig::new(1.0 / 20.0, 1.5 / 20.0, 2.0 / 20.0, 180, 0, false, false);
-    let servo_0 = Servo::new(
-        pwm_0.unwrap(),
-        ServoConfig::new(0.035, 0.06, 0.086, 90, 45, false, true),
-    );
-    let servo_1 = Servo::new(
-        pwm_1.unwrap(),
-        ServoConfig::new(0.03, 0.105, 0.12, 180 - 15, 90, false, true),
-    );
-    let servo_2 = Servo::new(
-        pwm_2.unwrap(),
-        ServoConfig::new(0.0315, 0.08, 0.12, 180 - 15, 0, true, true),
-    );
+    let servo_0 = Servo::new(pwm_0.unwrap(), mg90s_config);
+    let servo_1 = Servo::new(pwm_1.unwrap(), mg90s_config);
+    let servo_2 = Servo::new(pwm_2.unwrap(), mg90s_config);
     let servo_4 = Servo::new(pwm_4.unwrap(), mg90s_config);
     let servo_5 = Servo::new(pwm_5.unwrap(), mg90s_config);
     let servo_6 = Servo::new(pwm_6.unwrap(), mg90s_config);

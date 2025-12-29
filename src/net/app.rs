@@ -3,7 +3,7 @@ use crate::{include_flash_bytes, include_flash_str};
 use embassy_time::Duration;
 use picoserve::response::{DebugValue, File, Redirect};
 use picoserve::routing::{PathRouter, get, get_service, parse_path_segment};
-use picoserve::{AppBuilder, AppRouter, Router};
+use picoserve::{AppBuilder, AppRouter, Router, Server};
 
 pub const WEB_TASK_POOL_SIZE: usize = 8;
 
@@ -19,17 +19,10 @@ pub async fn app_task(
     let mut tcp_tx_buffer = [0; 1024];
     let mut http_buffer = [0; 2048];
 
-    picoserve::listen_and_serve(
-        id,
-        app,
-        config,
-        stack,
-        port,
-        &mut tcp_rx_buffer,
-        &mut tcp_tx_buffer,
-        &mut http_buffer,
-    )
-    .await
+    Server::new(app, config, &mut http_buffer)
+        .listen_and_serve(id, stack, port, &mut tcp_rx_buffer, &mut tcp_tx_buffer)
+        .await
+        .into_never()
 }
 
 pub struct AppProps;
@@ -39,7 +32,7 @@ impl AppBuilder for AppProps {
 
     fn build_app(self) -> Router<Self::PathRouter> {
         Router::new()
-            .route("/", get(|| Redirect::to("/index.html")))
+            .route("/", get(|| async move { Redirect::to("/index.html") }))
             .route(
                 "/index.html",
                 get_service(File::html(include_flash_str!("www/index.html"))),
@@ -84,10 +77,10 @@ impl AppBuilder for AppProps {
                 }),
             )
             .route(
-                ("/pwm", parse_path_segment()),
-                get(|pwm: u16| async move {
-                    let pwm = pwm as f32 / 6666.66;
-                    SERVO_SIGNAL.signal(ServoTask::CALIBRATION(pwm));
+                ("/pwm", parse_path_segment(), parse_path_segment()),
+                get(|data: (u8, u16)| async move {
+                    let pwm = data.1 as f32 / 6666.66;
+                    SERVO_SIGNAL.signal(ServoTask::CALIBRATION(data.0, pwm));
                     DebugValue(pwm)
                 }),
             )
