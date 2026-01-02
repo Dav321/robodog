@@ -122,6 +122,18 @@ impl ServoConfig {
             home,
         }
     }
+
+    pub fn hip(min: f32, home: f32, max: f32) -> Self {
+        ServoConfig::new(min, home, max, 90, 45, false, true)
+    }
+
+    pub fn thigh(min: f32, home: f32, max: f32) -> Self {
+        ServoConfig::new(min, home, max, 180 - 15, 90, false, true)
+    }
+
+    pub fn foot(min: f32, home: f32, max: f32) -> Self {
+        ServoConfig::new(min, home, max, 180 - 15, 0, true, true)
+    }
 }
 
 pub struct Servo<'d> {
