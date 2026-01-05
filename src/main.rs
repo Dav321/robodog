@@ -80,19 +80,19 @@ async fn main(spawner: Spawner) {
     #[allow(unused_variables)]
     let mg90s_config = ServoConfig::new(1.0 / 20.0, 1.5 / 20.0, 2.0 / 20.0, 180, 0, false, false);
 
-    let servo_0 = Servo::new(pwm_0.unwrap(), ServoConfig::hip(0.05, 0.075, 0.1));
+    let servo_0 = Servo::new(pwm_0.unwrap(), ServoConfig::hip(0.05, 0.068, 0.1));
     let servo_1 = Servo::new(pwm_1.unwrap(), ServoConfig::thigh(0.073, 0.088, 0.115));
     let servo_2 = Servo::new(pwm_2.unwrap(), ServoConfig::foot(0.028, 0.0678, 0.118));
 
-    let servo_4 = Servo::new(pwm_4.unwrap(), ServoConfig::hip(0.06, 0.082, 0.105));
+    let servo_4 = Servo::new(pwm_4.unwrap(), ServoConfig::hip(0.06, 0.088, 0.105));
     let servo_5 = Servo::new(pwm_5.unwrap(), ServoConfig::thigh(0.056, 0.085, 0.102));
     let servo_6 = Servo::new(pwm_6.unwrap(), ServoConfig::foot(0.0275, 0.077, 0.119));
 
-    let servo_8 = Servo::new(pwm_8.unwrap(), ServoConfig::hip(0.04, 0.065, 0.093));
+    let servo_8 = Servo::new(pwm_8.unwrap(), ServoConfig::hip(0.04, 0.060, 0.093));
     let servo_9 = Servo::new(pwm_9.unwrap(), ServoConfig::thigh(0.07, 0.1, 0.12));
     let servo_10 = Servo::new(pwm_10.unwrap(), ServoConfig::foot(0.035, 0.086, 0.119));
 
-    let servo_12 = Servo::new(pwm_12.unwrap(), ServoConfig::hip(0.055, 0.078, 0.1));
+    let servo_12 = Servo::new(pwm_12.unwrap(), ServoConfig::hip(0.055, 0.085, 0.1));
     let servo_13 = Servo::new(pwm_13.unwrap(), ServoConfig::thigh(0.07, 0.1, 0.12));
     let servo_14 = Servo::new(pwm_14.unwrap(), ServoConfig::foot(0.03, 0.08, 0.125));
 
